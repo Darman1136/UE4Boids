@@ -44,7 +44,7 @@ void ABoid::BeginPlay() {
 	}
 
 	BoidTarget = Cast<ABoidTarget>(UGameplayStatics::GetActorOfClass(GetWorld(), ABoidTarget::StaticClass()));
-	if (BoidTarget) {
+	if (!BoidTarget) {
 		UE_LOG(BoidLog, Error, TEXT("Failed to find BoidTarget in scene"));
 	}
 }
@@ -64,14 +64,24 @@ void ABoid::CalculateBoidRotation(float DeltaTime) {
 	FVector SeparationVector = FVector::ZeroVector;
 	FVector TargetVector = FVector::ZeroVector;
 	if (!ArrayLibrary::IsEmpty<ABoid*>(CloseBoids)) {
-		for (ABoid* Boid : CloseBoids) {
+		// Sort by distance
+		CloseBoids.Sort([this](const ABoid& B1, const ABoid& B2) {
+			float DistanceToB1 = (B1.GetActorLocation() - GetActorLocation()).Size();
+			float DistanceToB2 = (B2.GetActorLocation() - GetActorLocation()).Size();
+			return DistanceToB1 < DistanceToB2;
+			});
+
+		// Only take the closest boids into account, limited by AmountOfBoidsToObserve
+		int32 Limit = FMath::Min(CloseBoids.Num(), AmountOfBoidsToObserve);
+		for (int index = 0; index < Limit; index++) {
+			ABoid* Boid = CloseBoids[index];
 			CalculateAlignment(AlignmentVector, Boid);
 			CalculateCohesion(CohesionVector, Boid);
 			CalculateSeparation(SeparationVector, Boid);
 		}
-		AlignmentVector /= CloseBoids.Num();
-		CohesionVector /= CloseBoids.Num();
-		SeparationVector /= CloseBoids.Num();
+		AlignmentVector /= Limit;
+		CohesionVector /= Limit;
+		SeparationVector /= Limit;
 
 		AlignmentVector.Normalize();
 		CohesionVector.Normalize();
@@ -86,6 +96,8 @@ void ABoid::CalculateBoidRotation(float DeltaTime) {
 	InterpolatedForwardVector += CohesionVector * Manager->GetCohesionWeight();
 	InterpolatedForwardVector += SeparationVector * Manager->GetSeparationWeight();
 	InterpolatedForwardVector += TargetVector * Manager->GetTargetWeight();
+
+	InterpolatedForwardVector *= TurnSpeed;
 
 	InterpolatedForwardVector = FMath::VInterpTo(GetActorForwardVector(), InterpolatedForwardVector, DeltaTime, 1.f);
 	InterpolatedForwardVector.Normalize();
@@ -129,15 +141,15 @@ FVector ABoid::CalculateTarget() {
 }
 
 void ABoid::OnBoidBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
-	if (OtherActor && OtherActor->IsA(ABoid::StaticClass())) {
+	if (OtherActor && OtherActor->IsA(ABoid::StaticClass()) && OtherActor != this) {
 		CloseBoids.AddUnique(Cast<ABoid>(OtherActor));
-		UE_LOG(BoidLog, Warning, TEXT("Added %s"), *OtherActor->GetName());
+		UE_LOG(BoidLog, Log, TEXT("Added %s"), *OtherActor->GetName());
 	}
 }
 
 void ABoid::OnBoidEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
-	if (OtherActor && OtherActor->IsA(ABoid::StaticClass())) {
+	if (OtherActor && OtherActor->IsA(ABoid::StaticClass()) && OtherActor != this) {
 		CloseBoids.Remove(Cast<ABoid>(OtherActor));
-		UE_LOG(BoidLog, Warning, TEXT("Removed %s"), *OtherActor->GetName());
+		UE_LOG(BoidLog, Log, TEXT("Removed %s"), *OtherActor->GetName());
 	}
 }

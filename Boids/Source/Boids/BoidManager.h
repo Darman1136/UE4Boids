@@ -38,6 +38,9 @@ protected:
 		bool Active = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+		int32 BoidUpdatePerTick = 20;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 		bool BoidsFollowTarget = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
@@ -56,4 +59,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Info")
 		TArray<ABoid*> ManagedBoids;
 
+private:
+	int32 TickUpdateCounter = 0;
 };

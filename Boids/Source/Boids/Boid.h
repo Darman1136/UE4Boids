@@ -55,10 +55,20 @@ protected:
 		class UArrowComponent* ArrowComponent;
 
 	// Settings
+
+	// The amount of boids to take into account when calculating the next position/rotation.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta=(ClampMin = "1"))
+		int32 AmountOfBoidsToObserve = 10;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 		float ForwardSpeed = 100.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+		float TurnSpeed = 3.f;
+
 	// Info
+
+	// Array that tracks close boids. Close is defined by being inside the CloseBoidCollisionSphere.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Info")
 		TArray<ABoid*> CloseBoids;
 
