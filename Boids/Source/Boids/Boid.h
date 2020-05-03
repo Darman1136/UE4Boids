@@ -26,11 +26,11 @@ protected:
 
 	virtual void BeginDestroy() override;
 
-	virtual FVector CalculateSeparation();
+	virtual void CalculateSeparation(FVector &Spearation, ABoid* Boid);
 
-	virtual FVector CalculateAlignment();
+	virtual void CalculateAlignment(FVector &Alignment, ABoid* Boid);
 
-	virtual FVector CalculateCohesion();
+	virtual void CalculateCohesion(FVector &Cohesion, ABoid* Boid);
 
 	virtual FVector CalculateTarget();
 
@@ -43,7 +43,7 @@ protected:
 protected:
 	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		class USceneComponent* SceneComponent;
+		class UBoxComponent* BoxCollisionComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		class UStaticMeshComponent* Mesh;

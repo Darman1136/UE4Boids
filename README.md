@@ -2,7 +2,7 @@
 
 This is a simple boid implementation based on http://www.red3d.com/cwr/boids/. During the update phase the forward vector of all boids are being adjusted. Afterwards they're moved according to the new vector.
 
-UE4 StarterContent is required.
+Written in UE4.23.1, StarterContent is required.
 
 ## Classes
 

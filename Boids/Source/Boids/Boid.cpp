@@ -2,6 +2,7 @@
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Libraries/ArrayLibrary.h"
@@ -14,12 +15,13 @@ DEFINE_LOG_CATEGORY(BoidLog);
 ABoid::ABoid() {
 	PrimaryActorTick.bCanEverTick = false;
 
-	SceneComponent = CreateDefaultSubobject<USceneComponent>(FName("SceneComponent"));
-	SetRootComponent(SceneComponent);
+	BoxCollisionComponent = CreateDefaultSubobject<UBoxComponent>(FName("SceneComponent"));
+	BoxCollisionComponent->SetBoxExtent(FVector(16.f));
+	SetRootComponent(BoxCollisionComponent);
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(FName("Mesh"));
 	Mesh->SetCollisionProfileName(FName("Boid"));
-	Mesh->SetupAttachment(SceneComponent);
+	Mesh->SetupAttachment(BoxCollisionComponent);
 
 	CloseBoidCollisionSphere = CreateDefaultSubobject<USphereComponent>(FName("CollisionCloseBoidCollisionSphere"));
 	CloseBoidCollisionSphere->SetSphereRadius(126);
@@ -28,7 +30,7 @@ ABoid::ABoid() {
 	CloseBoidCollisionSphere->SetupAttachment(Mesh);
 
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(FName("ArrowComponent"));
-	ArrowComponent->SetupAttachment(SceneComponent);
+	ArrowComponent->SetupAttachment(BoxCollisionComponent);
 }
 
 void ABoid::BeginPlay() {
@@ -57,12 +59,33 @@ void ABoid::BeginDestroy() {
 void ABoid::CalculateBoidRotation(float DeltaTime) {
 	FVector InterpolatedForwardVector = FVector::ZeroVector;
 
-	InterpolatedForwardVector += CalculateAlignment() * Manager->GetSeparationWeight();
-	InterpolatedForwardVector += CalculateCohesion()* Manager->GetCohesionWeight();
-	InterpolatedForwardVector += CalculateSeparation()* Manager->GetSeparationWeight();
-	if (Manager->GetBoidsFollowTarget()) {
-		InterpolatedForwardVector += CalculateTarget()* Manager->GetTargetWeight();
+	FVector AlignmentVector = FVector::ZeroVector;
+	FVector CohesionVector = FVector::ZeroVector;
+	FVector SeparationVector = FVector::ZeroVector;
+	FVector TargetVector = FVector::ZeroVector;
+	if (!ArrayLibrary::IsEmpty<ABoid*>(CloseBoids)) {
+		for (ABoid* Boid : CloseBoids) {
+			CalculateAlignment(AlignmentVector, Boid);
+			CalculateCohesion(CohesionVector, Boid);
+			CalculateSeparation(SeparationVector, Boid);
+		}
+		AlignmentVector /= CloseBoids.Num();
+		CohesionVector /= CloseBoids.Num();
+		SeparationVector /= CloseBoids.Num();
+
+		AlignmentVector.Normalize();
+		CohesionVector.Normalize();
+		SeparationVector.Normalize();
 	}
+
+	if (Manager->GetBoidsFollowTarget()) {
+		TargetVector = CalculateTarget();
+	}
+
+	InterpolatedForwardVector += AlignmentVector * Manager->GetAlignmentWeight();
+	InterpolatedForwardVector += CohesionVector * Manager->GetCohesionWeight();
+	InterpolatedForwardVector += SeparationVector * Manager->GetSeparationWeight();
+	InterpolatedForwardVector += TargetVector * Manager->GetTargetWeight();
 
 	InterpolatedForwardVector = FMath::VInterpTo(GetActorForwardVector(), InterpolatedForwardVector, DeltaTime, 1.f);
 	InterpolatedForwardVector.Normalize();
@@ -83,41 +106,17 @@ void ABoid::UpdateBoidPosition() {
 	AddActorWorldOffset(NextBoidWorldOffset);
 }
 
-FVector ABoid::CalculateSeparation() {
-	FVector Separation = FVector::ZeroVector;
-	if (!ArrayLibrary::IsEmpty<ABoid*>(CloseBoids)) {
-		for (ABoid* Boid : CloseBoids) {
-			FVector Sub = GetActorLocation() - Boid->GetActorLocation();
-			Separation += Sub * Sub.GetSafeNormal().Size();
-		}
-		Separation /= CloseBoids.Num();
-		Separation.Normalize();
-	}
-	return Separation;
+void ABoid::CalculateSeparation(FVector &Separation, ABoid* Boid) {
+	FVector Sub = GetActorLocation() - Boid->GetActorLocation();
+	Separation += Sub * Sub.GetSafeNormal().Size();
 }
 
-FVector ABoid::CalculateAlignment() {
-	FVector Alignment = FVector::ZeroVector;
-	if (!ArrayLibrary::IsEmpty<ABoid*>(CloseBoids)) {
-		for (ABoid* Boid : CloseBoids) {
-			Alignment += Boid->GetActorForwardVector();
-		}
-		Alignment /= CloseBoids.Num();
-		Alignment.Normalize();
-	}
-	return Alignment;
+void ABoid::CalculateAlignment(FVector &Alignment, ABoid* Boid) {
+	Alignment += Boid->GetActorForwardVector();
 }
 
-FVector ABoid::CalculateCohesion() {
-	FVector Cohesion = FVector::ZeroVector;
-	if (!ArrayLibrary::IsEmpty<ABoid*>(CloseBoids)) {
-		for (ABoid* Boid : CloseBoids) {
-			Cohesion += Boid->GetActorLocation();
-		}
-		Cohesion /= CloseBoids.Num();
-		Cohesion.Normalize();
-	}
-	return Cohesion;
+void ABoid::CalculateCohesion(FVector &Cohesion, ABoid* Boid) {
+	Cohesion += Boid->GetActorLocation();
 }
 
 FVector ABoid::CalculateTarget() {
