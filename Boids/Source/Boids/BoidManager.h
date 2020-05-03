@@ -3,19 +3,20 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Boid.h"
+#include "HAL/Runnable.h"
+#include "Multithreading/BoidCalculationWorker.h"
 #include "BoidManager.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(BoidManagerLog, Log, All);
 
 UCLASS()
-class BOIDS_API ABoidManager : public AActor
-{
+class BOIDS_API ABoidManager : public AActor {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	ABoidManager();
 
-public:	
+public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void AddManagedBoid(ABoid* Boid);
@@ -33,9 +34,17 @@ public:
 	float GetTargetWeight() const { return TargetWeight; }
 
 protected:
+	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+protected:
 	// Settings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 		bool Active = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+		int32 AmountOfThreads = 5;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 		int32 BoidUpdatePerTick = 20;
@@ -61,4 +70,16 @@ protected:
 
 private:
 	int32 TickUpdateCounter = 0;
+
+	// add boid to the thread with the least managed boids
+	void AddBoidToThread(ABoid* Boid);
+
+private:
+	// is manager initialized? (are threads/runnables created)
+	bool InitializationDone = false;
+
+	// list of boids to be distributed to worker threads/runnables
+	TArray<ABoid*> BoidsToDistributeToThreads;
+
+	TArray<FBoidCalculationWorker*> Runnables;
 };

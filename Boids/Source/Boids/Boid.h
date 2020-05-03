@@ -15,11 +15,15 @@ public:
 
 	virtual void CalculateBoidRotation(float DeltaTime);
 
+	virtual void CalculateBoidRotation(float DeltaTime, TArray<ABoid*> CloseBoidsLocal);
+
 	virtual void UpdateBoidRotation();
 
 	virtual void CalculateBoidPosition(float DeltaTime);
 
 	virtual void UpdateBoidPosition();
+
+	TArray<ABoid*> GetCloseBoids() const { return CloseBoids; };
 
 protected:
 	virtual void BeginPlay() override;

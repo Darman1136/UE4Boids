@@ -57,6 +57,10 @@ void ABoid::BeginDestroy() {
 }
 
 void ABoid::CalculateBoidRotation(float DeltaTime) {
+	CalculateBoidRotation(DeltaTime, CloseBoids);
+}
+
+void ABoid::CalculateBoidRotation(float DeltaTime, TArray<ABoid*> CloseBoidsLocal) {
 	FVector InterpolatedForwardVector = FVector::ZeroVector;
 
 	FVector AlignmentVector = FVector::ZeroVector;
