@@ -6,7 +6,7 @@
 DEFINE_LOG_CATEGORY(BoidCalculationWorkerLog);
 
 FBoidCalculationWorker::FBoidCalculationWorker() : StopTaskCounter(0) {
-	LocalThread = FRunnableThread::Create(this, TEXT("FBoidCalculationWorker"), 0, TPri_BelowNormal);
+	LocalThread = FRunnableThread::Create(this, TEXT("FBoidCalculationWorker"));
 }
 
 FBoidCalculationWorker::~FBoidCalculationWorker() {
@@ -21,45 +21,24 @@ bool FBoidCalculationWorker::Init() {
 }
 
 uint32 FBoidCalculationWorker::Run() {
-
 	while (StopTaskCounter.GetValue() == 0) {
-		UE_LOG(BoidCalculationWorkerLog, Error, TEXT("Running %d"), ManagedBoids.Num());
-
-		TimePrevious = TimeCurrent;
-		TimeCurrent = FPlatformTime::Seconds();
-		float DeltaTime = (float)(TimeCurrent - TimePrevious);
-
 		for (ABoid* Boid : ManagedBoids) {
-			TArray<ABoid*> CloseBoids = Boid->GetCloseBoids();
-			UE_LOG(BoidCalculationWorkerLog, Error, TEXT("Close cnt %d"), CloseBoids.Num());
-			//LocalBoid->CalculateBoidRotation(DeltaTime, CloseBoids);
+			Boid->CalculateBoidRotation();
 		}
-
 		FPlatformProcess::Sleep(0.01);
 	}
-
-	//UE_LOG(BoidCalculationWorkerLog, Error, TEXT("Run %s"), *LocalBoid->GetActorLocation().ToString());
-
-	//while (StopTaskCounter.GetValue() == 0) {
-	//	TimePrevious = TimeCurrent;
-	//	TimeCurrent = FPlatformTime::Seconds();
-	//	float DeltaTime = (float)(TimeCurrent - TimePrevious);
-
-
-	//	//TArray<ABoid*> CloseBoids;
-	//	//AsyncTask(ENamedThreads::GameThread,
-	//	//	[this, &CloseBoids]() {  CloseBoids = LocalBoid->GetCloseBoids(); });
-	//	//UE_LOG(BoidCalculationWorkerLog, Error, TEXT("Run %d"), CloseBoids.Num());
-	//	UE_LOG(BoidCalculationWorkerLog, Error, TEXT("while %s"), *LocalBoid->GetName());
-	//	FPlatformProcess::Sleep(0.01);
-	//	//LocalBoid->CalculateBoidRotation(DeltaTime, CloseBoids);
-	//}
-
 	return 0;
 }
 
 void FBoidCalculationWorker::Stop() {
 	StopTaskCounter.Increment();
+}
+
+void FBoidCalculationWorker::EnsureCompletion() {
+	Stop();
+	if (LocalThread) {
+		LocalThread->WaitForCompletion();
+	}
 }
 
 void FBoidCalculationWorker::AddBoid(ABoid * Boid) {

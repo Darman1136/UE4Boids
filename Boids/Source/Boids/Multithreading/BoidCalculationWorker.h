@@ -16,6 +16,8 @@ public:
 	virtual uint32 Run();
 	virtual void Stop();
 
+	void EnsureCompletion();
+
 	void AddBoid(ABoid* Boid);
 	int32 ManagedBoidsCount() const { return ManagedBoids.Num(); };
 

@@ -23,7 +23,7 @@ public:
 
 	virtual void RemoveManagedBoid(ABoid* Boid);
 
-	bool GetBoidsFollowTarget() const { return BoidsFollowTarget; }
+	bool IsBoidsFollowTarget() const { return BoidsFollowTarget; }
 
 	float GetSeparationWeight() const { return SeparationWeight; }
 
@@ -32,6 +32,8 @@ public:
 	float GetCohesionWeight() const { return CohesionWeight; }
 
 	float GetTargetWeight() const { return TargetWeight; }
+
+	TArray<ABoid*> GetManagedBoids() const { return ManagedBoids;  }
 
 protected:
 	virtual void BeginPlay() override;
@@ -45,9 +47,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 		int32 AmountOfThreads = 5;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
-		int32 BoidUpdatePerTick = 20;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 		bool BoidsFollowTarget = true;
@@ -69,16 +68,14 @@ protected:
 		TArray<ABoid*> ManagedBoids;
 
 private:
-	int32 TickUpdateCounter = 0;
-
-	// add boid to the thread with the least managed boids
+	// Add boid to the thread with the least managed boids
 	void AddBoidToThread(ABoid* Boid);
 
 private:
-	// is manager initialized? (are threads/runnables created)
+	// Is manager initialized? (are threads/runnables created)
 	bool InitializationDone = false;
 
-	// list of boids to be distributed to worker threads/runnables
+	// List of boids to be distributed to worker threads/runnables
 	TArray<ABoid*> BoidsToDistributeToThreads;
 
 	TArray<FBoidCalculationWorker*> Runnables;
