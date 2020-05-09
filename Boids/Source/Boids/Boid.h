@@ -6,6 +6,15 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(BoidLog, Log, All);
 
+struct FOtherBoidInfo {
+	ABoid* Other;
+	float Distance;
+
+	FOtherBoidInfo(ABoid* Other_,
+		float Distance_) : Other(Other_), Distance(Distance_) {
+	}
+};
+
 UCLASS()
 class BOIDS_API ABoid : public AActor {
 	GENERATED_BODY()
@@ -13,13 +22,15 @@ class BOIDS_API ABoid : public AActor {
 public:
 	ABoid();
 
-	virtual void CalculateBoidRotation(float DeltaTime);
+	virtual void CalculateBoidRotation();
 
-	virtual void UpdateBoidRotation();
+	virtual void UpdateBoidRotation(float DeltaTime);
 
 	virtual void CalculateBoidPosition(float DeltaTime);
 
 	virtual void UpdateBoidPosition();
+
+	virtual TArray<ABoid*> CalculateClosestBoids(int32 Amount);
 
 protected:
 	virtual void BeginPlay() override;
@@ -34,12 +45,6 @@ protected:
 
 	virtual FVector CalculateTarget();
 
-	UFUNCTION()
-		virtual void OnBoidBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-		virtual void OnBoidEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
 protected:
 	// Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -49,15 +54,12 @@ protected:
 		class UStaticMeshComponent* Mesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		class USphereComponent* CloseBoidCollisionSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		class UArrowComponent* ArrowComponent;
 
 	// Settings
 
 	// The amount of boids to take into account when calculating the next position/rotation.
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta=(ClampMin = "1"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (ClampMin = "1"))
 		int32 AmountOfBoidsToObserve = 10;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
@@ -66,11 +68,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 		float TurnSpeed = 3.f;
 
-	// Info
-
-	// Array that tracks close boids. Close is defined by being inside the CloseBoidCollisionSphere.
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Info")
-		TArray<ABoid*> CloseBoids;
+	// If a boid is within this distance it'll be used to calculate the next position/rotation
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+		float CloseBoidDistanceCutOff = 300.f;
 
 private:
 	class ABoidManager* Manager;

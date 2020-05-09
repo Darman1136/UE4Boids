@@ -23,12 +23,6 @@ ABoid::ABoid() {
 	Mesh->SetCollisionProfileName(FName("Boid"));
 	Mesh->SetupAttachment(BoxCollisionComponent);
 
-	CloseBoidCollisionSphere = CreateDefaultSubobject<USphereComponent>(FName("CollisionCloseBoidCollisionSphere"));
-	CloseBoidCollisionSphere->SetSphereRadius(126);
-	CloseBoidCollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &ABoid::OnBoidBeginOverlap);
-	CloseBoidCollisionSphere->OnComponentEndOverlap.AddDynamic(this, &ABoid::OnBoidEndOverlap);
-	CloseBoidCollisionSphere->SetupAttachment(Mesh);
-
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(FName("ArrowComponent"));
 	ArrowComponent->SetupAttachment(BoxCollisionComponent);
 }
@@ -56,7 +50,9 @@ void ABoid::BeginDestroy() {
 	Super::BeginDestroy();
 }
 
-void ABoid::CalculateBoidRotation(float DeltaTime) {
+void ABoid::CalculateBoidRotation() {
+	TArray<ABoid*> CloseBoids = CalculateClosestBoids(AmountOfBoidsToObserve);
+
 	FVector InterpolatedForwardVector = FVector::ZeroVector;
 
 	FVector AlignmentVector = FVector::ZeroVector;
@@ -64,31 +60,22 @@ void ABoid::CalculateBoidRotation(float DeltaTime) {
 	FVector SeparationVector = FVector::ZeroVector;
 	FVector TargetVector = FVector::ZeroVector;
 	if (!ArrayLibrary::IsEmpty<ABoid*>(CloseBoids)) {
-		// Sort by distance
-		CloseBoids.Sort([this](const ABoid& B1, const ABoid& B2) {
-			float DistanceToB1 = (B1.GetActorLocation() - GetActorLocation()).Size();
-			float DistanceToB2 = (B2.GetActorLocation() - GetActorLocation()).Size();
-			return DistanceToB1 < DistanceToB2;
-			});
-
-		// Only take the closest boids into account, limited by AmountOfBoidsToObserve
-		int32 Limit = FMath::Min(CloseBoids.Num(), AmountOfBoidsToObserve);
-		for (int index = 0; index < Limit; index++) {
+		for (int index = 0; index < CloseBoids.Num(); index++) {
 			ABoid* Boid = CloseBoids[index];
 			CalculateAlignment(AlignmentVector, Boid);
 			CalculateCohesion(CohesionVector, Boid);
 			CalculateSeparation(SeparationVector, Boid);
 		}
-		AlignmentVector /= Limit;
-		CohesionVector /= Limit;
-		SeparationVector /= Limit;
+		AlignmentVector /= CloseBoids.Num();
+		CohesionVector /= CloseBoids.Num();
+		SeparationVector /= CloseBoids.Num();
 
 		AlignmentVector.Normalize();
 		CohesionVector.Normalize();
 		SeparationVector.Normalize();
 	}
 
-	if (Manager->GetBoidsFollowTarget()) {
+	if (Manager->IsBoidsFollowTarget()) {
 		TargetVector = CalculateTarget();
 	}
 
@@ -99,14 +86,13 @@ void ABoid::CalculateBoidRotation(float DeltaTime) {
 
 	InterpolatedForwardVector *= TurnSpeed;
 
-	InterpolatedForwardVector = FMath::VInterpTo(GetActorForwardVector(), InterpolatedForwardVector, DeltaTime, 1.f);
 	InterpolatedForwardVector.Normalize();
 
 	NextBoidRotation = UKismetMathLibrary::MakeRotFromX(InterpolatedForwardVector);
 }
 
-void ABoid::UpdateBoidRotation() {
-	SetActorRotation(NextBoidRotation);
+void ABoid::UpdateBoidRotation(float DeltaTime) {
+	SetActorRotation(FMath::RInterpTo(GetActorRotation(), NextBoidRotation, DeltaTime, 1.f));
 }
 
 void ABoid::CalculateBoidPosition(float DeltaTime) {
@@ -140,16 +126,32 @@ FVector ABoid::CalculateTarget() {
 	return Target;
 }
 
-void ABoid::OnBoidBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
-	if (OtherActor && OtherActor->IsA(ABoid::StaticClass()) && OtherActor != this) {
-		CloseBoids.AddUnique(Cast<ABoid>(OtherActor));
-		UE_LOG(BoidLog, Log, TEXT("Added %s"), *OtherActor->GetName());
+// Collision sphere seems to be way slower than calculating distance by hand
+TArray<ABoid*> ABoid::CalculateClosestBoids(int32 Amount) {
+	TArray<ABoid*> rc;
+
+	if (Manager) {
+		TArray<FOtherBoidInfo> OtherBoidInfos;
+		for (ABoid* Other : Manager->GetManagedBoids()) {
+			if (!Other || this == Other) {
+				continue;
+			}
+			float OtherDistance = (Other->GetActorLocation() - GetActorLocation()).Size();
+			if (OtherDistance < CloseBoidDistanceCutOff) {
+				FOtherBoidInfo OtherInfo(Other, OtherDistance);
+				OtherBoidInfos.Add(OtherInfo);
+			}
+		}
+		// Sort by distance
+		OtherBoidInfos.Sort([this](const FOtherBoidInfo& O1, const FOtherBoidInfo& O2) {
+			return O1.Distance < O2.Distance;
+			});
+
+		for (int32 i = 0; i < Amount && i < OtherBoidInfos.Num(); i++) {
+			rc.Add(OtherBoidInfos[i].Other);
+		}
 	}
+
+	return rc;
 }
 
-void ABoid::OnBoidEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
-	if (OtherActor && OtherActor->IsA(ABoid::StaticClass()) && OtherActor != this) {
-		CloseBoids.Remove(Cast<ABoid>(OtherActor));
-		UE_LOG(BoidLog, Log, TEXT("Removed %s"), *OtherActor->GetName());
-	}
-}
