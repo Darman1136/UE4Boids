@@ -8,11 +8,10 @@
 DECLARE_LOG_CATEGORY_EXTERN(BoidSpawnerLog, Log, All);
 
 UCLASS()
-class BOIDS_API ABoidSpawner : public AActor
-{
+class BOIDS_API ABoidSpawner : public AActor {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	ABoidSpawner();
 
 protected:
@@ -35,4 +34,20 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 		float SpawnRadius = 500.f;
+
+	// Spawn with random pitch
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Rotation")
+		bool RandomPitch = true; 
+	
+	// Spawn with random yaw
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Rotation")
+		bool RandomYaw = true; 
+	
+	// Spawn with random roll
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Rotation")
+		bool RandomRoll = true;
+
+private:
+	// Creates a random spawn rotation. RandomPitch, RandomYaw and RandomRoll determine which axis are randomized.
+	FRotator RandomSpawnRotation();
 };

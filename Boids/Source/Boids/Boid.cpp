@@ -16,11 +16,14 @@ ABoid::ABoid() {
 	PrimaryActorTick.bCanEverTick = false;
 
 	BoxCollisionComponent = CreateDefaultSubobject<UBoxComponent>(FName("SceneComponent"));
+	BoxCollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	BoxCollisionComponent->SetBoxExtent(FVector(16.f));
 	SetRootComponent(BoxCollisionComponent);
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(FName("Mesh"));
 	Mesh->SetCollisionProfileName(FName("Boid"));
+	Mesh->SetCollisionProfileName(FName("Boid"));
+	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Mesh->SetupAttachment(BoxCollisionComponent);
 
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(FName("ArrowComponent"));

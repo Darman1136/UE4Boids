@@ -51,11 +51,12 @@ Boids/Plugins/*/Binaries/*
 
 # Builds
 Boids/Build/*
+Builds/*
 
 # Whitelist PakBlacklist-<BuildConfiguration>.txt files
-!Build/*/
-Build/*/**
-!Build/*/PakBlacklist*.txt
+!Boids/Build/*/
+Boids/Build/*/**
+!Boids/Build/*/PakBlacklist*.txt
 
 # Don't ignore icon files in Build
 !Build/**/*.ico

@@ -21,9 +21,18 @@ void ABoidSpawner::BeginPlay() {
 	if (ClassToSpawn) {
 		for (int index = 0; index < SpawnCount; index++) {
 			FVector SpawnLocation = UKismetMathLibrary::RandomUnitVector() * SpawnRadius + GetActorLocation();
-			GetWorld()->SpawnActor<ABoid>(ClassToSpawn, SpawnLocation, UKismetMathLibrary::RandomRotator());
+			GetWorld()->SpawnActor<ABoid>(ClassToSpawn, SpawnLocation, RandomSpawnRotation());
 		}
 	} else {
 		UE_LOG(BoidSpawnerLog, Error, TEXT("Class of objects to spawn is missing"));
 	}
+}
+
+/* also see UKismetMathLibrary::RandomRotator */
+FRotator ABoidSpawner::RandomSpawnRotation() {
+	FRotator RRot;
+	RRot.Yaw = RandomYaw ? FMath::FRand() * 360.f : 0;
+	RRot.Pitch = RandomPitch ? FMath::FRand() * 360.f : 0;
+	RRot.Roll = RandomRoll ? FMath::FRand() * 360.f : 0;
+	return RRot;
 }
