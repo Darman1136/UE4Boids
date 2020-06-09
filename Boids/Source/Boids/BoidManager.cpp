@@ -9,6 +9,12 @@ ABoidManager::ABoidManager() {
 
 void ABoidManager::BeginPlay() {
 	Super::BeginPlay();
+
+	// only load config in shipping builds else use value specifed in the editor
+#if UE_BUILD_SHIPPING 
+	ReloadConfig(ABoidManager::StaticClass());
+#endif
+
 	for (int32 i = 0; i < AmountOfThreads; i++) {
 		Runnables.Add(new FBoidCalculationWorker());
 	}

@@ -9,7 +9,7 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(BoidManagerLog, Log, All);
 
-UCLASS()
+UCLASS(Config = Boids)
 class BOIDS_API ABoidManager : public AActor {
 	GENERATED_BODY()
 
@@ -45,8 +45,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 		bool Active = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
-		int32 AmountOfThreads = 5;
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Settings")
+		int32 AmountOfThreads = 8;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 		bool BoidsFollowTarget = true;

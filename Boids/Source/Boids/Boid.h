@@ -47,14 +47,20 @@ protected:
 
 protected:
 	// Components
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)
 		class UBoxComponent* BoxCollisionComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)
 		class UStaticMeshComponent* Mesh;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)
 		class UArrowComponent* ArrowComponent;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)
+		class USpringArmComponent* SpringArmComponent;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)
+		class UCameraComponent* CameraComponent;
 
 	// Settings
 

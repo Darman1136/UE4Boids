@@ -7,7 +7,7 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(BoidSpawnerLog, Log, All);
 
-UCLASS()
+UCLASS(Config = Boids)
 class BOIDS_API ABoidSpawner : public AActor {
 	GENERATED_BODY()
 
@@ -19,8 +19,11 @@ protected:
 
 protected:
 	// Components
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)
 		class USceneComponent* SceneComponent;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)
+		class UBillboardComponent* BillboardComponent;
 
 	// Settings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
@@ -29,7 +32,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 		TSubclassOf<ABoid> ClassToSpawn;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Settings")
 		int32 SpawnCount = 30;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")

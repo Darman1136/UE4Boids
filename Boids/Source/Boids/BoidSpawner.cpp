@@ -1,6 +1,7 @@
 #include "BoidSpawner.h"
 #include "Engine/World.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Components/BillboardComponent.h"
 
 DEFINE_LOG_CATEGORY(BoidSpawnerLog);
 
@@ -9,10 +10,18 @@ ABoidSpawner::ABoidSpawner() {
 
 	SceneComponent = CreateDefaultSubobject<USceneComponent>(FName("SceneComponent"));
 	SetRootComponent(SceneComponent);
+
+	BillboardComponent = CreateDefaultSubobject<UBillboardComponent>(FName("BillboardComponent"));
+	BillboardComponent->SetupAttachment(SceneComponent);
 }
 
 void ABoidSpawner::BeginPlay() {
 	Super::BeginPlay();
+
+	// only load config in shipping builds else use value specifed in the editor
+#if UE_BUILD_SHIPPING 
+	ReloadConfig(ABoidSpawner::StaticClass());
+#endif
 
 	if (!Active) {
 		return;

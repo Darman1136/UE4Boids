@@ -9,6 +9,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "BoidManager.h"
 #include "BoidTarget.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
 
 DEFINE_LOG_CATEGORY(BoidLog);
 
@@ -28,6 +30,17 @@ ABoid::ABoid() {
 
 	ArrowComponent = CreateDefaultSubobject<UArrowComponent>(FName("ArrowComponent"));
 	ArrowComponent->SetupAttachment(BoxCollisionComponent);
+
+	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(FName("SpringArmComponent"));
+	SpringArmComponent->TargetArmLength = 120.f;
+	SpringArmComponent->SocketOffset = FVector(0.f, 0.f, 20.f);
+	SpringArmComponent->bDoCollisionTest = false;
+	SpringArmComponent->bEnableCameraLag = true;
+	SpringArmComponent->bEnableCameraRotationLag = true;
+	SpringArmComponent->SetupAttachment(BoxCollisionComponent);
+
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>(FName("CameraComponent"));
+	CameraComponent->SetupAttachment(SpringArmComponent);
 }
 
 void ABoid::BeginPlay() {
