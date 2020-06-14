@@ -4,6 +4,21 @@ This is a simple, multithreaded boid implementation based on http://www.red3d.co
 
 Written in UE4.23.1, StarterContent is required.
 
+## Configuration File
+
+The executable can be configured via the following options. It's located in <code>%appdata%\Local\Boids\Saved\Config\WindowsNoEditor\Boids.ini</code>. The file may not exist, you can use the values below when creating it. (If the folder is missing, start the packaged executable once)
+
+```
+[/Script/Boids.BoidSpawner]
+SpawnCount=500
+
+[/Script/Boids.BoidManager]
+AmountOfThreads=2
+```
+
+* **SpawnCount** Amount of boids to spawn
+* **AmountOfThreads** The amount of threads to create and use for calculating positional updates
+
 ## Classes
 
 ### Boid
